@@ -8,6 +8,8 @@ app/temp_audio/*.wav
 app/*.json
 pasos.txt
 
+audios/*
+
 # C extensions
 *.so
 

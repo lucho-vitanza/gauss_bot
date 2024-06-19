@@ -3,9 +3,10 @@ from tkinter import filedialog, messagebox
 import logging
 import os
 import mimetypes
-from transcribe import transcribe_audio
-from audio_handler import convert_audio_to_wav
+from transcribe import transcribe_short_audio
+from audio_handler import convert_audio_to_wav, get_audio_duration
 from report_handler import save_report, extract_study_and_report
+from audios_gcs import transcribe_with_gcs  # Importar la función para transcripción con GCS
 
 # Configurar logging
 logging.basicConfig(level=logging.DEBUG)
@@ -26,7 +27,16 @@ def start_gui():
                     messagebox.showerror("Error", "Error al convertir el archivo a WAV.")
                     return
                 
-                transcript = transcribe_audio(wav_path)
+                duration = get_audio_duration(wav_path)
+                if duration is None:
+                    messagebox.showerror("Error", "No se pudo obtener la duración del archivo de audio.")
+                    return
+                
+                if duration <= 60:
+                    transcript = transcribe_short_audio(wav_path)
+                else:
+                    transcript = transcribe_with_gcs(wav_path)  # Usar GCS para transcripción de audios largos
+                
                 if wav_path != file_path:
                     os.remove(wav_path)
                 

@@ -3,4 +3,4 @@ twilio
 google-cloud-speech
 requests
 ffmpeg-python
-
+magic

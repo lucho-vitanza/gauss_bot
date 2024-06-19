@@ -3,9 +3,10 @@ import logging
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
-from transcribe import transcribe_audio
-from audio_handler import download_audio, convert_audio_to_wav
+from transcribe import transcribe_short_audio
+from audio_handler import download_audio, convert_audio_to_wav, get_audio_duration
 from report_handler import save_report, extract_study_and_report
+from audios_gcs import transcribe_with_gcs
 
 # Configurar logging
 logging.basicConfig(level=logging.DEBUG)
@@ -16,6 +17,8 @@ client = Client(os.getenv('TWILIO_ACCOUNT_SID'), os.getenv('TWILIO_AUTH_TOKEN'))
 
 @app.route("/whatsapp", methods=['POST'])
 def whatsapp_reply():
+
+
     msg = request.form.get('Body')
     num_media = int(request.form.get('NumMedia', 0))
     logging.debug(f"Mensaje recibido: {msg}")
@@ -36,12 +39,20 @@ def whatsapp_reply():
                 if not wav_path:
                     response_message = "Error al convertir el archivo de audio."
                 else:
-                    transcript = transcribe_audio(wav_path)
-                    logging.debug(f"Transcripción: {transcript}")
+                    duration = get_audio_duration(wav_path)
+                    if duration is None:
+                        response_message = "No se pudo obtener la duración del archivo de audio."
+                    else:
+                        if duration <= 60:
+                            transcript = transcribe_short_audio(wav_path)
+                        else:
+                            transcript = transcribe_with_gcs(wav_path)
+                        
+                        logging.debug(f"Transcripción: {transcript}")
 
-                    study_number, report_text = extract_study_and_report(transcript)
-                    save_path = save_report(study_number, report_text, "reports/")
-                    response_message = f"Informe guardado en {save_path}"
+                        study_number, report_text = extract_study_and_report(transcript)
+                        save_path = save_report(study_number, report_text, "reports/")
+                        response_message = f"Informe guardado en {save_path}"
         else:
             response_message = "No se pudo obtener la URL del archivo multimedia."
     else:
