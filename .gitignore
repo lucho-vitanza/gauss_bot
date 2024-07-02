@@ -6,6 +6,8 @@ app/reports/*.txt
 app/temp_audio/*.wav
 
 app/*.json
+app/*.oga
+app/bot2.py
 pasos.txt
 
 audios/*
