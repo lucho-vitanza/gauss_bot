@@ -4,7 +4,7 @@ __pycache__/
 
 app/reports/*.txt
 app/temp_audio/*.wav
-
+test/.txt
 app/*.json
 app/*.oga
 app/bot2.py
